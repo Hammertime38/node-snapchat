@@ -23,21 +23,27 @@
  * permissions and limitations under the Licence.
  */
 
+
 var FormStream = require('multipart-form-stream'),
-crypto = require('crypto'),
-https = require('https'),
-util = require('util'),
-spawn = require("child_process").spawn,
-uuid = require("uuid-v4"),
-qs = require('querystring'),
-Q =  require('q');
+    crypto = require('crypto'),
+    https = require('https'),
+    util = require('util'),
+    spawn = require("child_process").spawn,
+    uuid = require("uuid-v4"),
+    qs = require('querystring'),
+    Q = require('q');
 
 var e = module.exports;
-/** @const */ var blob_enc_key = e.blob_enc_key = Buffer('4d3032636e5135314a69393776775434', 'hex');
-/** @const */ var pattern = e.hash_pattern = "0001110111101110001111010101111011010001001110011000110001000110";
-/** @const */ var secret = e.secret = "iEk21fuwZApXlz93750dmW22pw389dPwOk";
-/** @const */ var static_token = e.static_token = "m198sOkJEn37DjqZ32lpRu76xmw288xSQ9";
-/** @const */ var hostname = e.hostname = "feelinsonice.appspot.com";
+/** @const */
+var blob_enc_key = e.blob_enc_key = Buffer('4d3032636e5135314a69393776775434', 'hex');
+/** @const */
+var pattern = e.hash_pattern = "0001110111101110001111010101111011010001001110011000110001000110";
+/** @const */
+var secret = e.secret = "iEk21fuwZApXlz93750dmW22pw389dPwOk";
+/** @const */
+var static_token = e.static_token = "m198sOkJEn37DjqZ32lpRu76xmw288xSQ9";
+/** @const */
+var hostname = e.hostname = "feelinsonice.appspot.com";
 
 var sink = require("stream-sink");
 
@@ -63,8 +69,10 @@ e.hash = function hash(param1, param2) {
 
 
 
-/** @const */ e.MEDIA_IMAGE = 0;
-/** @const */ e.MEDIA_VIDEO = 1;
+/** @const */
+e.MEDIA_IMAGE = 0;
+/** @const */
+e.MEDIA_VIDEO = 1;
 
 /**
  * Make a post call and sign it with a req_token.
@@ -76,7 +84,7 @@ e.hash = function hash(param1, param2) {
  * @return {Promise}
  */
 e.postCall = function postCall(endpoint, post_data, param1, param2, raw, cb) {
-    if(typeof raw === 'function') {
+    if (typeof raw === 'function') {
         cb = raw;
         raw = false;
     }
@@ -94,12 +102,13 @@ e.postCall = function postCall(endpoint, post_data, param1, param2, raw, cb) {
     };
     return Q.promise(function(resolve, reject) {
         var req = https.request(opts, function(res) {
-            if(raw) {
+            if (raw) {
                 res.pause();
                 return resolve(res);
             }
             res.pipe(sink().on('data', function(resp) {
-                if(res.statusCode==200)
+                // console.log(res.statusCode);
+                if (res.statusCode == 200)
                     resolve(resp);
                 else
                     reject(resp);
@@ -116,17 +125,17 @@ e.postCall = function postCall(endpoint, post_data, param1, param2, raw, cb) {
  * @return {Promise} sync data
  */
 e.login = function login(username, password, cb) {
-    var ts = '' + Date.now();
+    var ts = Date.now().toString();
     return e.postCall('/ph/login', {
-        username: username,
-        password: password,
-        timestamp: ts
-    }, static_token, ts)
-	.then(function(data) {
+            username: username,
+            password: password,
+            timestamp: ts
+        }, static_token, ts)
+        .then(function(data) {
             var resp = JSON.parse(data);
-            if(resp.auth_token) return(resp);
-            else throw(resp);
-	}).nodeify(cb);
+            if (resp.auth_token) return (resp);
+            else throw (resp);
+        }).nodeify(cb);
 };
 
 /**
@@ -139,11 +148,11 @@ e.login = function login(username, password, cb) {
 e.sync = function(username, auth_token, json, cb) {
     var ts = Date.now().toString();
     return e.postCall('/ph/sync', {
-        username: username,
-        timestamp: ts,
-        json: JSON.stringify(json||{}),
-        auth_token: auth_token
-    }, auth_token, ts)
+            username: username,
+            timestamp: ts,
+            json: JSON.stringify(json || {}),
+            auth_token: auth_token
+        }, auth_token, ts)
         .then(function(data) {
             return JSON.parse(data);
         }).nodeify(cb);
@@ -159,19 +168,20 @@ e.sync = function(username, auth_token, json, cb) {
 e.getBlob = function(username, auth_token, id, cb) {
     var ts = Date.now().toString();
     return e.postCall('/ph/blob', {
-        id: id,
-        timestamp: ts,
-        username: username,
-    }, auth_token, ts, true)
-	.then(function(stream) {
-            if(stream.statusCode != 200)
-		return Q.promise(function(resolve, reject) {
-		    stream.setEncoding('ascii');
-		    stream.pipe(sink().on('data', function(resp) {
-			reject(resp);
-		    }));
-		    stream.resume();
-		});
+            id: id,
+            timestamp: ts,
+            username: username,
+        }, auth_token, ts, true)
+        .then(function(stream) {
+            // console.log(stream);
+            if (stream.statusCode != 200)
+                return Q.promise(function(resolve, reject) {
+                    stream.setEncoding('ascii');
+                    stream.pipe(sink().on('data', function(resp) {
+                        reject(resp);
+                    }));
+                    stream.resume();
+                });
             if (stream.headers['content-type'] !== 'application/octet-stream')
                 return stream;
 
@@ -198,7 +208,50 @@ e.getBlob = function(username, auth_token, id, cb) {
  * @return {Promise} The blob's mediaId.
  */
 e.upload = function upload(username, auth_token, stream, isVideo, cb) {
-    var ts = ''+Date.now();
+    var ts = '' + Date.now();
+    isVideo = Number(!!isVideo);
+
+    var mediaId = (username + '~' + uuid()).toUpperCase();
+    var encrypt = spawn('openssl', ['enc', '-K', '4d3032636e5135314a69393776775434', '-aes-128-ecb']);
+    encrypt.stdout.pause();
+    stream.pipe(encrypt.stdin);
+
+    var form = new FormStream();
+    var req_token = e.hash(auth_token, ts);
+    form.addField('req_token', req_token);
+    form.addField('timestamp', ts);
+    form.addStream('data', 'media', 'application/octet-stream', encrypt.stdout);
+    form.addField('username', username);
+    form.addField('media_id', mediaId);
+    form.addField('type', isVideo);
+
+    return Q.promise(function(resolve, reject) {
+        var req = https.request({
+            host: hostname,
+            method: 'POST',
+            path: '/ph/upload',
+            headers: {
+                'Content-type': 'multipart/form-data; boundary=' + form.getBoundary(),
+                // 'User-Agent': user_agent,
+            }
+        }, function(res) {
+            res.setEncoding('ascii');
+            res.pipe(sink().on('data', function(data) {
+                if (res.statusCode != 200) return reject(data);
+                resolve(mediaId);
+            }));
+        });
+        form.on('data', function(data) {
+            req.write(data);
+        }).on('end', function(end) {
+            req.end(end);
+        });
+    }).nodeify(cb);;
+};
+
+
+e.retry_post_story = function upload(username, auth_token, stream, isVideo, cb) {
+    var ts = '' + Date.now();
     isVideo = Number(!!isVideo);
 
     var mediaId = (username + uuid()).toUpperCase();
@@ -215,14 +268,14 @@ e.upload = function upload(username, auth_token, stream, isVideo, cb) {
     form.addField('media_id', mediaId);
     form.addField('type', isVideo);
 
-    return Q.promise(function(resolve,reject) {
+    return Q.promise(function(resolve, reject) {
         var req = https.request({
             host: hostname,
             method: 'POST',
-            path: '/ph/upload',
+            path: '/bq/retry_post_story',
             headers: {
                 'Content-type': 'multipart/form-data; boundary=' + form.getBoundary(),
-                'User-Agent': user_agent,
+                // 'User-Agent': user_agent,
             }
         }, function(res) {
             res.setEncoding('ascii');
@@ -231,13 +284,14 @@ e.upload = function upload(username, auth_token, stream, isVideo, cb) {
                 resolve(mediaId);
             }));
         });
-	form.on('data', function(data) {
-	    req.write(data);
-	}).on('end', function(end) {
-	    req.end(end);
-	});
+        form.on('data', function(data) {
+            req.write(data);
+        }).on('end', function(end) {
+            req.end(end);
+        });
     }).nodeify(cb);;
 };
+
 
 /**
  * Send a blob to a friend.
@@ -248,16 +302,75 @@ e.upload = function upload(username, auth_token, stream, isVideo, cb) {
  * @return {Promise}
  */
 e.send = function send(username, auth_token, mediaId, friends, time, cb) {
-    var ts = Date.now()+'';
+    var ts = Date.now() + '';
     var postData = {
         username: username,
         auth_token: auth_token,
         recipient: friends,
         media_id: mediaId,
-        timestamp:ts
+        timestamp: ts
     };
-    if(typeof time != 'undefined') postData.time = time;
-    return e.postCall('/ph/send', postData, auth_token,ts).nodeify(cb);
+    if (typeof time != 'undefined') postData.time = time;
+    return e.postCall('/ph/send', postData, auth_token, ts).nodeify(cb);
+};
+
+/**
+ * Try to mark snap viewed
+ * @param  {String}  username
+ * @param  {String}  auth_token
+ * @param  {String}  added_friends_timestamp    
+ * @return {Promise}
+ */
+e.markSnapViewed = function markSnapViewed(id, username, auth_token, added_friends_timestamp, cb) {
+    var ts = Date.now().toString();
+    var t = Date.now() - 3;
+    
+    // Snap Info ref : http://gibsonsec.org/snapchat/fulldisclosure/#sending-updates-bqupdate_snaps
+    // console.log(snaps);
+    var snaps_json = '{"' + id + '":{"c":0,"t":"' + ts + '","replayed":0}}';
+    
+    // Events
+    events_json = '[ { "eventName" : "SNAP_VIEW", "params" : { "id" : "' + id + '" }, "ts" : "' + t + '" }, { "eventName": "SNAP_EXPIRED", "params" : { "id": "' + id + '" }, "ts" : "' + ts + '" } ]'
+    
+    var postData = {
+        username: username,
+        added_friends_timestamp: added_friends_timestamp.toString(),
+        // auth_token: auth_token,
+        // events: events,2
+        // json: "{'"+id+"':{'c':0,'t':'"+ts+"','replayed':0}}",
+        json: snaps_json,
+        events: events_json,
+        timestamp: ts
+    };
+    return e.postCall('/bq/update_snaps', postData, auth_token, ts).nodeify(cb);
+};
+
+
+/**
+ * Post a Story 
+ * @param  {String}  username
+ * @param  {String}  auth_token
+ * @param  {String}  mediaId       A unique identifyer for the blob generated by @link upload
+ * @param  {int}     isVIdeo       1 is for Video and 0 is for Image
+ * @param  {String}  caption       Caption text in the snap
+ * @return {Promise}
+ */
+e.postStory = function postStory(username, auth_token, mediaId, isVideo,caption, cb) {
+    var ts = Date.now().toString();
+    // console.log(typeof(mediaId));
+    var postData = {
+        username: username,
+        // auth_token: auth_token,
+        caption_text_display: caption,
+        client_id: mediaId,
+        media_id: mediaId,
+        timestamp: ts,
+        time: 5, // This time is recalculated by Snapchat so ...
+        type: isVideo,
+        zipped: 0
+    };
+    // if (typeof time != 'undefined') postData.time = time;
+    return e.postCall('/bq/post_story', postData, auth_token, ts, true).nodeify(cb);
 };
 
 /**
@@ -270,14 +383,14 @@ e.send = function send(username, auth_token, mediaId, friends, time, cb) {
 e.addFriend = function addFriend(username, auth_token, friend) {
     var ts = Date.now().toString();
     return e.postCall('/ph/friend', {
-        username: username,
-        timestamp: ts,
-        action: 'add',
-        friend: friend
-    }, auth_token, ts)
-	.then(function(data) {
+            username: username,
+            timestamp: ts,
+            action: 'add',
+            friend: friend
+        }, auth_token, ts)
+        .then(function(data) {
             return JSON.parse(data);
-	});
+        });
 };
 
 /**
@@ -291,15 +404,15 @@ e.addFriend = function addFriend(username, auth_token, friend) {
 e.rename = function rename(username, auth_token, friend, newName, cb) {
     var ts = Date.now().toString();
     return e.postCall('/ph/friend', {
-        username: username,
-        timestamp: ts,
-        action: 'display',
-        friend: friend,
-        display: newName
-    }, auth_token, ts)
-	.then(function(data) {
+            username: username,
+            timestamp: ts,
+            action: 'display',
+            friend: friend,
+            display: newName
+        }, auth_token, ts)
+        .then(function(data) {
             return JSON.parse(data);
-	}).nodeify(cb);
+        }).nodeify(cb);
 };
 
 /**
@@ -312,14 +425,14 @@ e.rename = function rename(username, auth_token, friend, newName, cb) {
 e.unfriend = function(username, auth_token, friend, cb) {
     var ts = Date.now().toString();
     return e.postCall('/ph/friend', {
-        username: username,
-        timestamp: ts,
-        action: 'delete',
-        friend: friend,
-    }, auth_token, ts)
-	.then(function(data) {
+            username: username,
+            timestamp: ts,
+            action: 'delete',
+            friend: friend,
+        }, auth_token, ts)
+        .then(function(data) {
             return JSON.parse(data);
-	}).nodeify(cb);
+        }).nodeify(cb);
 };
 
 /**
@@ -332,29 +445,29 @@ e.unfriend = function(username, auth_token, friend, cb) {
 e.register = function register(email, password, username, cb) {
     var ts = Date.now().toString();
     return e.postCall('/ph/register', {
-        timestamp: ts,
-        password: password,
-        email: email
-    }, static_token, ts)
-	.then(function(data) {
+            timestamp: ts,
+            password: password,
+            email: email
+        }, static_token, ts)
+        .then(function(data) {
             var resp = JSON.parse(JSON.parse(data));
             var token = resp.token;
-            if(typeof token === 'undefined')
-		throw resp;
+            if (typeof token === 'undefined')
+                throw resp;
 
             var ts = Date.now().toString();
             return e.postCall('/ph/registeru', {
-		timestamp: ts,
-		email: email,
-		username: username,
-            }, static_token, ts)
-		.then(function(data) {
-		    var resp = JSON.parse(data);
-		    if(data.auth_token === 'undefined')
-			throw resp;
-		    return resp;
-		});
-	}).nodeify(cb);
+                    timestamp: ts,
+                    email: email,
+                    username: username,
+                }, static_token, ts)
+                .then(function(data) {
+                    var resp = JSON.parse(data);
+                    if (data.auth_token === 'undefined')
+                        throw resp;
+                    return resp;
+                });
+        }).nodeify(cb);
 };
 
 /**

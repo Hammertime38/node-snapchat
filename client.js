@@ -45,6 +45,7 @@ Client.prototype.login = function(username, password, cb) {
     return sc.login(username, password).then(function(data) {
         self.username = data.username;
         self.auth_token = data.auth_token;
+        self.added_friends_timestamp = data.added_friends_timestamp;
         self.lastSync = {
             time: Date.now(),
             data: data
@@ -214,3 +215,14 @@ Client.prototype.getFriendRequests = function(cb) {
         return data.updates_response.added_friends;
     }).nodeify(cb);
 };
+
+/**
+ * Get updates
+ * @return {Promise}
+ */
+Client.prototype.getFriendRequests = function(cb) {
+    return sc.getUpdates(this.username, this.auth_token).then(function(data) {
+        return data.updates_response;
+    }).nodeify(cb);
+};
+
