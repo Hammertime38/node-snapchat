@@ -322,7 +322,10 @@ e.send = function send(username, auth_token, mediaId, friends, time, cb) {
  * @return {Promise}
  */
 e.markSnapViewed = function markSnapViewed(id, username, auth_token, added_friends_timestamp, cb) {
+
     var ts = Date.now().toString();
+
+    // Time viewd video
     var t = Date.now() - 3;
     
     // Snap Info ref : http://gibsonsec.org/snapchat/fulldisclosure/#sending-updates-bqupdate_snaps

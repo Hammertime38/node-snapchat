@@ -220,7 +220,7 @@ Client.prototype.getFriendRequests = function(cb) {
  * Get updates
  * @return {Promise}
  */
-Client.prototype.getFriendRequests = function(cb) {
+Client.prototype.getUpdates = function(cb) {
     return sc.getUpdates(this.username, this.auth_token).then(function(data) {
         return data.updates_response;
     }).nodeify(cb);
