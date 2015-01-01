@@ -226,3 +226,14 @@ Client.prototype.getUpdates = function(cb) {
     }).nodeify(cb);
 };
 
+/**
+ * Update your email
+ * @param  {snap_id} Id snap
+ * @return {Promise}
+ */
+Client.prototype.markSnapViewed = function(snap_id, cb) {
+    return sc.markSnapViewed(snap_id, this.username, this.auth_token).then(function(data) {
+        return data.updates_response;
+    }).nodeify(cb);
+}
+
