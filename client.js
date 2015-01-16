@@ -162,6 +162,7 @@ Client.prototype.postStory = function(mediaId, isVideo, zipped, caption) {
 Client.prototype.addFriend = function(friend) {
     if (typeof this.auth_token === "undefined") return;
     var self = this;
+
     return sc.addFriend(this.username, this.auth_token, friend);
 };
 

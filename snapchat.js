@@ -26,17 +26,15 @@
 
 var crypto = require('crypto'),
     FormStream = require('multipart-form-stream'),
-    rp = require('request-promise'),
+    Promise = require('bluebird'),
     FormData = require('form-data'),
     util = require('util'),
     https = require('https'),
     spawn = require("child_process").spawn,
     uuid = require("uuid-v4"),
     fs = require('fs'),
-    Q = require('q'),
-    // form = new FormData(),
     qs = require('querystring'),
-    Promise = require('bluebird');
+    rp = require('request-promise');
 
 var e = module.exports;
 /** @const */
@@ -100,7 +98,7 @@ e.postCall = function postCall(endpoint, post_data, auth_token, ts, raw) {
         // json: true,
         // path: endpoint,
         form: post_data,
-        // resolveWithFullResponse: true,
+        resolveWithFullResponse: false,
         headers: {
             'Accept-Language': 'en-US',
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -110,7 +108,6 @@ e.postCall = function postCall(endpoint, post_data, auth_token, ts, raw) {
             // 'accept-encoding': 'identity'
         }
     };
-
     return rp(opts)
 
 
@@ -250,7 +247,7 @@ e.retry_post_story = function upload(username, auth_token, stream, isVideo) {
     form.addField('media_id', mediaId);
     form.addField('type', isVideo);
 
-    return Q.promise(function(resolve, reject) {
+    return new Pomise(function(resolve, reject) {
         var req = https.request({
             host: hostname,
             method: 'POST',
@@ -379,11 +376,12 @@ e.postStory = function postStory(username, auth_token, mediaId, isVideo, zipped,
  */
 e.addFriend = function addFriend(username, auth_token, friend) {
     var ts = Date.now().toString();
-    return e.postCall('/ph/friend', {
+    return e.postCall('/bq/friend', {
             username: username,
+            // display: username,
             timestamp: ts,
             action: 'add',
-            friend: friend
+            friend: friend,
         }, auth_token, ts)
         .then(function(data) {
             return JSON.parse(data);
