@@ -27,6 +27,7 @@
 var crypto = require('crypto'),
     FormStream = require('multipart-form-stream'),
     rp = require('request-promise'),
+    FormData = require('form-data'),
     util = require('util'),
     https = require('https'),
     spawn = require("child_process").spawn,
@@ -99,7 +100,7 @@ e.postCall = function postCall(endpoint, post_data, auth_token, ts, raw) {
         // json: true,
         // path: endpoint,
         form: post_data,
-        resolveWithFullResponse: true,
+        // resolveWithFullResponse: true,
         headers: {
             'Accept-Language': 'en-US',
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -110,7 +111,8 @@ e.postCall = function postCall(endpoint, post_data, auth_token, ts, raw) {
         }
     };
 
-    return rp(opts);
+    return rp(opts)
+
 
 };
 
@@ -128,7 +130,7 @@ e.login = function login(username, password) {
             timestamp: ts
         }, static_token, ts)
         .then(function(data) {
-            return JSON.parse(data.body);
+            return JSON.parse(data);
         });
 
 };
@@ -166,12 +168,16 @@ e.getBlob = function(username, auth_token, id) {
         decrypt = crypto.createDecipheriv('aes-128-ecb', blob_enc_key, '');
 
     // Return decrypted stream
-    return stream = e.postCall('/ph/blob', {
-            id: id,
-            timestamp: ts,
-            username: username,
+    // stream =
+    return e.postCall('/ph/blob', {
+            id: id, // ID snap
+            timestamp: ts, // Timestamp
+            username: username, // User name
         }, auth_token, ts)
-        .pipe(decrypt)
+        .pipe(decrypt) // Decrypt stream
+        .on('error', console.dir)
+
+    // return fs.createReadStream(stream.path);
 
 };
 
@@ -183,11 +189,11 @@ e.getBlob = function(username, auth_token, id) {
  * @param  {Boolean} isVideo
  * @return {Promise} The blob's mediaId.
  */
-e.upload = function upload(username, auth_token, stream, isVideo, cb) {
+e.upload = function upload(username, auth_token, stream, isVideo) {
     var ts = '' + Date.now();
     isVideo = Number(!!isVideo);
 
-    var mediaId = (username + uuid()).toUpperCase();
+    var mediaId = (username + '~' + uuid()).toUpperCase();
     var encrypt = spawn('openssl', ['enc', '-K', '4d3032636e5135314a69393776775434', '-aes-128-ecb']);
     encrypt.stdout.pause();
     stream.pipe(encrypt.stdin);
@@ -200,8 +206,7 @@ e.upload = function upload(username, auth_token, stream, isVideo, cb) {
     form.addField('username', username);
     form.addField('media_id', mediaId);
     form.addField('type', isVideo);
-
-    return Q.promise(function(resolve, reject) {
+    return new Promise(function(resolve, reject) {
         var req = https.request({
             host: hostname,
             method: 'POST',
@@ -213,7 +218,6 @@ e.upload = function upload(username, auth_token, stream, isVideo, cb) {
         }, function(res) {
             res.setEncoding('ascii');
             res.pipe(sink().on('data', function(data) {
-                console.log(data.statusCode);
                 if (res.statusCode != 200) return reject(data);
                 resolve(mediaId);
             }));
@@ -223,71 +227,9 @@ e.upload = function upload(username, auth_token, stream, isVideo, cb) {
         }).on('end', function(end) {
             req.end(end);
         })
-    }).nodeify(cb);;
+    })
 }
 
-
-// e.upload = function upload(username, auth_token, stream, isVideo) {
-//     var ts = '' + Date.now();
-//     isVideo = Number(!!isVideo);
-
-//     var mediaId = (username + '~' + uuid()).toUpperCase();
-//     var encrypt = spawn('openssl', ['enc', '-K', '4d3032636e5135314a69393776775434', '-aes-128-ecb']);
-//     encrypt.stdout.pause();
-//     stream.pipe(encrypt.stdin);
-
-//     // var form = new FormStream();
-//     var req_token = e.hash(auth_token, ts);
-
-//     formData = {
-//         req_token: req_token,
-//         timestamp: ts,
-//         type: isVideo,
-//         media_id: mediaId,
-//         username: username,
-//         data: {
-//             value: encrypt.stdout,
-//             options: {
-//                 filename: 'media',
-//                 contentType: 'image/jpg'
-//                 // contentType: 'application/octet-stream'
-//             }
-//         }
-//     }
-
-
-//     var form = new FormStream();
-//     var req_token = e.hash(auth_token, ts);
-//     form.addField('req_token', req_token);
-//     form.addField('timestamp', ts);
-//     form.addStream('data', 'media', 'application/octet-stream', encrypt.stdout);
-//     form.addField('username', username);
-//     form.addField('media_id', mediaId);
-//     form.addField('type', isVideo);
-
-//     // console.log(formData.getHeaders());
-//     var FormDatas = require('form-data');
-//     form = new FormDatas();
-//     var opts = {
-//         url: "https://" + hostname + '/ph/upload',
-//         method: 'POST',
-//         formData: formData,
-//         headers: {
-//             'Content-type': 'multipart/form-data; boundary=SuperSweetSpecialBoundaryShabam',
-//             'User-Agent': user_agent,
-//             'Accept-Language': 'en-US',
-//             'Accept-Locale': 'en_US',
-//         }
-//     };
-//     return rp(opts)
-//         .then(function(res) {
-//             console.log(res);
-//             res.setEncoding('ascii');
-//             return res;
-//         })
-//         .catch(console.dir);
-
-// };
 
 
 e.retry_post_story = function upload(username, auth_token, stream, isVideo) {
@@ -343,7 +285,7 @@ e.retry_post_story = function upload(username, auth_token, stream, isVideo) {
  */
 e.send = function send(username, auth_token, mediaId, friends, time) {
     var ts = Date.now().toString();
-    
+
     var postData = {
         username: username,
         recipient: friends,
@@ -385,6 +327,7 @@ e.markSnapViewed = function markSnapViewed(snap_id, username, auth_token) {
     var t = Date.now() - 30;
 
     //  A string representation of a dictionary of snap
+
     var snaps_json = '{ "' + snap_id + '":{ "replayed":0, "c": 0,"t": ' + ts + ' }}';
 
     // A string representation of a lis  of updates 
@@ -423,7 +366,8 @@ e.postStory = function postStory(username, auth_token, mediaId, isVideo, zipped,
         zipped: zipped
     };
 
-    return e.postCall('/bq/post_story', postData, auth_token, ts, true);
+    return e.postCall('/bq/post_story', postData, auth_token, ts)
+        .catch(console.dir);
 };
 
 /**

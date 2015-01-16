@@ -43,11 +43,9 @@ var Client = module.exports = function() {
 
 Client.prototype.login = function(username, password) {
     var self = this;
-    // console.log("ok");
     return sc.login(username, password)
         .then(function(data) {
 
-            // console.log(data);
             // Set Attributes
             self.username = data.updates_response.username;
             self.auth_token = data.updates_response.auth_token;
@@ -72,7 +70,6 @@ Client.prototype.register = function register(email, password, username) {
     var self = this;
     return sc.register(email, password, username)
         .then(function(syncData) {
-            console.log(typeof syncData);
             self.username = username;
             self.auth_token = syncData.auth_token;
             return syncData;
@@ -125,8 +122,8 @@ Client.prototype.getBlob = function(id) {
  * @param  {Boolean} isVideo True if the stream is a video.
  * @return {Promise} The blob id
  */
-Client.prototype.upload = function(stream, isVideo, cb) {
-    return sc.upload(this.username, this.auth_token, stream, isVideo).nodeify(cb);
+Client.prototype.upload = function(stream, isVideo) {
+    return sc.upload(this.username, this.auth_token, stream, isVideo);
 }
 
 /** Send the snap to people
