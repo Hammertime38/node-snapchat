@@ -31,7 +31,8 @@ var sc = require('./snapchat'),
  * @constructor
  */
 
-var Client = module.exports = function() {
+var Client = module.exports = function(auth_token) {
+    this.auth_token = auth_token;
     if (!(this instanceof Client)) return new Client();
 };
 
@@ -115,6 +116,17 @@ Client.prototype.getBlob = function(id) {
     if (typeof this.auth_token === "undefined") return Promise.reject("Not signed in");
     return sc.getBlob(this.username, this.auth_token, id);
 };
+
+/**
+ * find_friends
+ * @param  {String}  id The blob id.
+ * @return {Promise} A stream (decrypted if necessary)
+ */
+Client.prototype.findFriends = function(id) {
+    if (typeof this.auth_token === "undefined") return Promise.reject("Not signed in");
+    return sc.findFriends(this.username, this.auth_token, id);
+};
+
 
 /**
  * Uploads an blob

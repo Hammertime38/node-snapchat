@@ -6,7 +6,7 @@
   "scripts": {},
   "repository": {
     "type": "git",
-    "url": "https://github.com/nykac/node-snapchat"
+    "url": "https://github.com/mib4fun/node-snapchat"
   },
   "keywords": [
     "snapchat",
@@ -20,7 +20,7 @@
   "dependencies": {
     "form-data": "^0.2.0",
     "multipart-form-stream": "*",
-    "q": "*",
+    "bluebird": "*",
     "stream-sink": "*",
     "uuid-v4": "*"
   }
