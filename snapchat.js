@@ -132,6 +132,7 @@ e.login = function login(username, password) {
             return Promise.reject(res);
         })
         .then(function(data) {
+            console.log(data);
             return JSON.parse(data);
         })
 
