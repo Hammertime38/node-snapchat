@@ -31,8 +31,9 @@ var sc = require('./snapchat'),
  * @constructor
  */
 
-var Client = module.exports = function(auth_token) {
+var Client = module.exports = function(username, auth_token) {
     this.auth_token = auth_token;
+    this.username = username;
     if (!(this instanceof Client)) return new Client();
 };
 
@@ -59,6 +60,22 @@ Client.prototype.login = function(username, password) {
             return data;
         });
 };
+
+Client.prototype.getDeviceToken = function getDeviceToken() {
+    var self = this;
+    return sc.getDeviceToken();
+}
+
+Client.prototype.getGCMToken = function getGCMToken() {
+    var self = this;
+    return sc.getGCMToken();
+}
+
+Client.prototype.getAuthToken = function getAuthToken() {
+    var self = this;
+    return sc.getAuthToken();
+}
+
 
 /**
  * Sign up
@@ -261,7 +278,7 @@ Client.prototype.getFriendRequests = function(cb) {
  */
 Client.prototype.getUpdates = function(cb) {
     return sc.getUpdates(this.username, this.auth_token).then(function(data) {
-        return data.updates_response;
+        return JSON.parse(data);
     });
 };
 

@@ -48,8 +48,8 @@ var static_token = e.static_token = "m198sOkJEn37DjqZ32lpRu76xmw288xSQ9";
 /** @const */
 var hostname = e.hostname = "feelinsonice-hrd.appspot.com";
 /** @const */
-var user_agent = e.user_agent =  'Snapchat/8.1.1 Beta (Android SDK built for x86; Android 19; gzip)';
-// 'Snapchat/8.2.0.0 Beta (ALCATEL ONE TOUCH 6040D; Android 17; gzip)';
+// var user_agent = e.user_agent = 'Snapchat/9.0.2.1 Beta (ALCATEL ONE TOUCH 6040D; Android 17; gzip)';
+var user_agent = e.user_agent = 'Snapchat/8.1.2 (GT-I9505; Android 19; gzip)';
 
 var sink = require("stream-sink");
 
@@ -91,7 +91,9 @@ e.MEDIA_VIDEO = 1;
  */
 e.postCall = function postCall(endpoint, post_data, auth_token, ts) {
 
-    post_data.req_token = e.hash(auth_token, ts);
+    if (auth_token) {
+        post_data.req_token = e.hash(auth_token, ts);
+    };
     var data = qs.stringify(post_data);
     var opts = {
         uri: "https://" + hostname + endpoint,
@@ -106,11 +108,13 @@ e.postCall = function postCall(endpoint, post_data, auth_token, ts) {
             'Content-Length': data.length,
             'User-Agent': e.user_agent,
             'Accept-Locale': 'en_US',
-            'Accept': '*/*'
+            'accept-encoding': 'identity',
+            // 'Accept': '*/*'
             // 'accept-encoding': 'identity'
         }
     };
-    return rp(opts)
+
+    return rp(opts);
 
 
 };
@@ -133,6 +137,7 @@ e.login = function login(username, password) {
         })
         .then(function(data) {
             console.log(data);
+
             return JSON.parse(data);
         })
 
@@ -394,7 +399,6 @@ e.postStory = function postStory(username, auth_token, mediaId, isVideo, zipped,
     };
 
     return e.postCall('/bq/post_story', postData, auth_token, ts)
-        .catch(console.dir);
 };
 
 /**
@@ -551,10 +555,55 @@ e.privacy = function privacy(username, auth_token, only_friends) {
  */
 e.getUpdates = function(username, auth_token) {
     var ts = Date.now().toString();
-    return e.postCall('/bq/all_updates', {
+    return e.postCall('/loq/all_updates', {
         timestamp: ts,
         username: username
     }, auth_token, ts);
 };
+
+e.getDeviceToken = function getDeviceToken() {
+    var ts = Date.now().toString();
+    return e.postCall('/loq/device_id', {
+
+        timestamp: ts,
+    }, static_token, ts);
+    // body...
+}
+
+e.getGCMToken = function getGCMToken() {
+    var ts = Date.now().toString(),
+        post_data = {
+            'X-GOOG.USER_AID': '3627197574756735564',
+            'app': 'com.snapchat.android',
+            'sender': '191410808405',
+            'cert': '49f6badb81d89a9e38d65de76f09355071bd67e7',
+            'device': '3627197574756735564',
+            'app_ver': '510',
+            'info': ''
+        },
+        data = qs.stringify(post_data);
+
+    var opts = {
+        uri: "https://android.clients.google.com/c2dm/register3",
+        method: 'POST',
+        // json: true,
+        // path: endpoint,
+        form: post_data,
+        resolveWithFullResponse: false,
+        headers: {
+            // 'Accept-Language': 'en',
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Content-Length': data.length,
+            'User-Agent': ' Android-GCM/1.4 (DIABLOX JDQ39)',
+            // 'Accept-Locale': 'en_US',
+            // 'accept-encoding': 'identity',
+            'app': 'com.snapchat.android',
+            'Authorization': 'AidLogin 36271975747567355643'
+                // 'Accept': '*/*'
+                // 'accept-encoding': 'identity'
+        }
+    };
+    return rp(opts)
+}
 
 e.Client = require('./client');
