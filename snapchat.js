@@ -49,6 +49,7 @@ var static_token = e.static_token = "m198sOkJEn37DjqZ32lpRu76xmw288xSQ9";
 var hostname = e.hostname = "feelinsonice-hrd.appspot.com";
 /** @const */
 // var user_agent = e.user_agent = 'Snapchat/9.0.2.1 Beta (ALCATEL ONE TOUCH 6040D; Android 17; gzip)';
+// Fix Vervion to 8.1.2
 var user_agent = e.user_agent = 'Snapchat/8.1.2 (GT-I9505; Android 19; gzip)';
 
 var sink = require("stream-sink");

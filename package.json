@@ -18,22 +18,8 @@
   },
   "license": "EUPL-1.1",
   "dependencies": {
-    "form-data": "^0.2.0",
     "multipart-form-stream": "*",
-    "bluebird": "*",
     "stream-sink": "*",
     "uuid-v4": "*"
-  },
-  "gitHead": "0facffab393b5f9a43d3657c77a67f7fb2595505",
-  "readme": "node-snapchat\n=============\n\nA SnapChat client in Node.js\n\nEUPL-1.1 License\n",
-  "readmeFilename": "README.md",
-  "bugs": {
-    "url": "https://github.com/mib4fun/node-snapchat/issues"
-  },
-  "homepage": "https://github.com/mib4fun/node-snapchat",
-  "_id": "snapchat@1.0.8",
-  "_shasum": "b3e74814f776bee6e4cdd3ad5947fc16f134fe68",
-  "_from": "git://github.com/mib4fun/node-snapchat",
-  "_resolved": "git://github.com/mib4fun/node-snapchat#0facffab393b5f9a43d3657c77a67f7fb2595505",
-  "_fromGithub": true
+  }
 }
