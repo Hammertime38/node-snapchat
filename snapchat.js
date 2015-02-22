@@ -27,7 +27,6 @@
 var crypto = require('crypto'),
     FormStream = require('multipart-form-stream'),
     Promise = require('bluebird'),
-    FormData = require('form-data'),
     util = require('util'),
     https = require('https'),
     spawn = require("child_process").spawn,

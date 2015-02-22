@@ -1,6 +1,6 @@
 {
   "name": "snapchat",
-  "version": "1.1",
+  "version": "1.0.8",
   "description": "A snapchat client for node.js",
   "main": "snapchat.js",
   "scripts": {},
@@ -18,8 +18,11 @@
   },
   "license": "EUPL-1.1",
   "dependencies": {
-    "multipart-form-stream": "*",
-    "stream-sink": "*",
-    "uuid-v4": "*"
+    "bluebird": "^2.9.12",
+    "multipart-form-stream": "0.0.0",
+    "querystring": "^0.2.0",
+    "request-promise": "^0.4.0",
+    "stream-sink": "^1.2.0",
+    "uuid-v4": "^0.1.0"
   }
 }
